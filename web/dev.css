@@ -1,0 +1,71 @@
+/* Only for the dev shell (index.html): food's design tokens and page basics, which the plugin inherits inside food.
+   Taken over from Zweig-Flo/food, web/src/styles.css. */
+
+:root {
+  --bg: #eef1f0;
+  --surface: #ffffff;
+  --ink: #15202b;
+  --muted: #56616b;
+  --line: #d3d9dc;
+  --cobalt: #1f45b5;
+  --cobalt-fill: #1f45b5;
+  --cobalt-wash: #e4eafb;
+  --herb: #23703f;
+  --herb-fill: #23703f;
+  --herb-wash: #e0f0e6;
+  --tomato: #b8322a;
+  --tomato-fill: #b8322a;
+  --tomato-wash: #fbe5e2;
+  --yolk: #f5c842;
+  --on-fill: #ffffff;
+  --backdrop: rgb(10 15 20 / 0.45);
+  --font: "Archivo Variable", "Archivo", system-ui, sans-serif;
+  --page: 600px;
+  color-scheme: light dark;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #0f151c;
+    --surface: #18212b;
+    --ink: #e6ebf0;
+    --muted: #9aa5b0;
+    --line: #2b3743;
+    --cobalt: #9db3ff;
+    --cobalt-fill: #3d5fd6;
+    --cobalt-wash: #1d2a4d;
+    --herb: #74c99a;
+    --herb-fill: #2f8a52;
+    --herb-wash: #173326;
+    --tomato: #ff8f80;
+    --tomato-fill: #c0453a;
+    --tomato-wash: #3a1d1a;
+    --yolk: #e2bb3f;
+    --backdrop: rgb(0 0 0 / 0.6);
+  }
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html {
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--ink);
+  font: 400 16px/1.45 var(--font);
+  font-stretch: 100%;
+  -webkit-font-smoothing: antialiased;
+}
+
+.dev-page {
+  max-width: var(--page);
+  margin: 0 auto;
+  padding: 18px 16px 100px;
+}
