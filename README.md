@@ -10,6 +10,7 @@ _Stand 2026-10-23._
 - Grundgerüst als food-Plugin: Starter anlegen und archivieren, füttern mit Verhältnis und Hydration, Verlauf (2026-10-22)
 - Tamagotchi: Stimmung aus Zeit seit der Fütterung, Verhältnis und Temperatur (Ei, satt, wach, Höhepunkt, hungrig, verhungert, schläft), Hunger-Balken, „Wie letztes Mal“ füttern, Kühlschrank-Modus, Höhepunkt antippen, damit die Vorhersage lernt (2026-10-23)
 - Fermente statt nur Sauerteig: Art wählen (Sauerteig, Kimchi, Sauerkraut, Kombucha), Chargen mit Stufen, Reife-Balken, entlüften, probieren mit Notiz, fertig; eigenes Glas je Art (2026-10-23)
+- Design wie in food: „Jetzt dran“-Karte, Zeilen statt Karten, Stimmung als Farbfläche, Etikett im Stil der Nährwerttabelle (2026-10-23)
 
 **Als Nächstes**
 - Push-Erinnerungen („wird hungrig“, „Höhepunkt in 30 Min.“) über food als PWA, braucht dort eine Push-Schnittstelle für Plugins

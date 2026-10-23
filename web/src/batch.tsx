@@ -52,7 +52,7 @@ export function BatchActions({ ferment, onChange }: Props) {
         {!state.stage.next && (
           <button
             type="button"
-            className={`st-button${state.mood === "ready" || state.mood === "overripe" ? " st-button-primary" : ""}`}
+            className={`st-button${state.mood === "ready" || state.mood === "overripe" ? " st-button-done" : ""}`}
             disabled={add.isPending}
             onClick={() => add.mutate({ kind: "done" })}
           >

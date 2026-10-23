@@ -11,6 +11,11 @@
   --cobalt-wash: #e4eafb;
   --tomato: #b8322a;
   --tomato-fill: #b8322a;
+  --tomato-wash: #fbe5e2;
+  --herb: #23703f;
+  --herb-fill: #23703f;
+  --herb-wash: #e0f0e6;
+  --yolk: #f5c842;
   --on-fill: #ffffff;
   --font: "Archivo", system-ui, -apple-system, "Segoe UI", sans-serif;
   --page: 600px;
@@ -28,6 +33,11 @@
     --cobalt-wash: #1d2a4d;
     --tomato: #ff8f80;
     --tomato-fill: #c0453a;
+    --tomato-wash: #3a1d1a;
+    --herb: #74c99a;
+    --herb-fill: #2f8a52;
+    --herb-wash: #173326;
+    --yolk: #e2bb3f;
     color-scheme: dark;
   }
 }
@@ -43,6 +53,11 @@
   --cobalt-wash: #1d2a4d;
   --tomato: #ff8f80;
   --tomato-fill: #c0453a;
+  --tomato-wash: #3a1d1a;
+  --herb: #74c99a;
+  --herb-fill: #2f8a52;
+  --herb-wash: #173326;
+  --yolk: #e2bb3f;
   color-scheme: dark;
 }
 
@@ -53,6 +68,7 @@
 }
 
 body {
+  font-stretch: 100%;
   background: var(--bg);
   color: var(--ink);
   font: 400 16px/1.45 var(--font);

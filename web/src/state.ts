@@ -5,7 +5,39 @@ import type { Ferment } from "./api.ts";
 import { when, whenDay } from "./format.ts";
 import { useNow, type AnyMood } from "./pet.tsx";
 
+/** How a mood is coloured: needs you, ready to use, working, or resting. */
+export type Tone = "attention" | "ready" | "active" | "rest";
+
+const TONE: Record<AnyMood, Tone> = {
+  egg: "rest",
+  full: "active",
+  rising: "active",
+  peak: "ready",
+  hungry: "attention",
+  starving: "attention",
+  sleeping: "rest",
+  fresh: "active",
+  bubbling: "active",
+  burp: "attention",
+  ready: "ready",
+  overripe: "attention",
+  done: "rest",
+};
+
+/** What to do now, for the list of things due; null when nothing is due. */
+const TODO: Partial<Record<AnyMood, string>> = {
+  egg: "Zum ersten Mal füttern",
+  peak: "Jetzt backen oder füttern",
+  hungry: "Füttern",
+  starving: "Dringend füttern",
+  burp: "Entlüften",
+  ready: "Probieren",
+  overripe: "Abfüllen oder probieren",
+};
+
 export interface LiveState {
+  tone: Tone;
+  todo: string | null;
   mood: AnyMood;
   says: string;
   /** Hunger for what gets fed, progress to ready for a batch; null = nothing to show yet. */
@@ -29,6 +61,8 @@ export function useLiveState(ferment: Ferment): LiveState {
             ? `Hunger ab ${when(state.hungryAt, now)}`
             : null;
     return {
+      tone: TONE[state.mood],
+      todo: TODO[state.mood] ?? null,
       mood: state.mood,
       says: state.says,
       meter: last ? { value: state.hunger, label: "Hunger", warn: state.hunger >= 0.5 } : null,
@@ -49,6 +83,8 @@ export function useLiveState(ferment: Ferment): LiveState {
             ? `${stages}Tag ${state.day}`
             : `${stages}Tag ${state.day}, bereit ab ${whenDay(state.readyAt, now)}`;
   return {
+    tone: TONE[state.mood],
+    todo: state.mood === "ready" && state.stage.next ? state.stage.next : (TODO[state.mood] ?? null),
     mood: state.mood,
     says: state.says,
     meter:

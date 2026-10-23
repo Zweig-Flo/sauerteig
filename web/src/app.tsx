@@ -1,12 +1,13 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { ArrowLeft, Plus } from "lucide-react";
+import { ArrowLeft, ChevronRight, Plus } from "lucide-react";
 import { useState, type FormEvent } from "react";
 import { Link, Navigate, Route, Routes, useNavigate, useParams } from "react-router";
+import { batchMood } from "../../shared/batch.ts";
 import { KIND_RULES, KINDS, isKind, rules, type Kind } from "../../shared/kinds.ts";
 import { ApiError, type Ferment, type FermentDetail } from "./api.ts";
 import { BatchActions, EventList, TasteForm } from "./batch.tsx";
 import { usePlugin } from "./context.tsx";
-import { age, ago } from "./format.ts";
+import { age, ago, fedAt, whenDay } from "./format.ts";
 import { FeedForm, FeedingList, KeepActions, PeakForm } from "./keep.tsx";
 import { Meter, MOOD_LABEL, Pet } from "./pet.tsx";
 import { useLiveState } from "./state.ts";
@@ -60,7 +61,10 @@ function ListPage() {
   return (
     <>
       <header className="st-head">
-        <h1>Fermente</h1>
+        <div>
+          <p className="st-kicker">{today()}</p>
+          <h1>Fermente</h1>
+        </div>
         <Link className="st-button st-button-primary" to="/neu">
           <Plus aria-hidden size={18} /> Ansetzen
         </Link>
@@ -68,19 +72,26 @@ function ListPage() {
       {ferments.isPending && <Loading />}
       {ferments.error && <Problem error={ferments.error} retry={() => ferments.refetch()} />}
       {ferments.data && active.length === 0 && (
-        <p className="st-quiet">Noch nichts im Glas. Setz dein erstes Ferment an, dann zeigt es dir hier, wie es ihm geht.</p>
+        <div className="st-notice">
+          <p>Noch nichts im Glas. Setz dein erstes Ferment an, dann zeigt es dir hier, wie es ihm geht und was als Nächstes dran ist.</p>
+        </div>
       )}
-      <ul className="st-list">
-        {active.map((ferment) => (
-          <FermentItem key={ferment.id} ferment={ferment} />
-        ))}
-      </ul>
+      {active.length > 0 && <DueCard ferments={active} />}
+      {active.length > 0 && (
+        <section aria-label="Alle Gläser">
+          <ul className="st-rows">
+            {active.map((ferment) => (
+              <FermentRow key={ferment.id} ferment={ferment} />
+            ))}
+          </ul>
+        </section>
+      )}
       {archived.length > 0 && (
         <details className="st-archived">
           <summary>Archiviert ({archived.length})</summary>
-          <ul className="st-list">
+          <ul className="st-rows">
             {archived.map((ferment) => (
-              <FermentItem key={ferment.id} ferment={ferment} />
+              <FermentRow key={ferment.id} ferment={ferment} />
             ))}
           </ul>
         </details>
@@ -89,32 +100,67 @@ function ListPage() {
   );
 }
 
-function FermentItem({ ferment }: { ferment: Ferment }) {
+const dayFormat = new Intl.DateTimeFormat("de-DE", { timeZone: "Europe/Berlin", weekday: "long", day: "numeric", month: "long" });
+const today = () => dayFormat.format(new Date());
+
+/** What needs a hand right now, most urgent first; the one place on the page that asks for something. */
+function DueCard({ ferments }: { ferments: Ferment[] }) {
+  return (
+    <section className="st-due" aria-label="Jetzt dran">
+      <h2 className="st-due-head">Jetzt dran</h2>
+      <ul>
+        {ferments.map((ferment) => (
+          <DueRow key={ferment.id} ferment={ferment} />
+        ))}
+      </ul>
+      <p className="st-due-empty">Alles ruhig. Kein Glas braucht dich gerade.</p>
+    </section>
+  );
+}
+
+function DueRow({ ferment }: { ferment: Ferment }) {
+  const state = useLiveState(ferment);
+  if (!state.todo) return null;
+  return (
+    <li>
+      <Link to={`/${ferment.id}`} className="st-due-row" data-tone={state.tone}>
+        <Pet kind={ferment.kind} mood={state.mood} size={30} />
+        <span>
+          <strong>{state.todo}</strong>
+          <span className="st-quiet">{ferment.name}</span>
+        </span>
+        <ChevronRight aria-hidden size={20} />
+      </Link>
+    </li>
+  );
+}
+
+function FermentRow({ ferment }: { ferment: Ferment }) {
   const state = useLiveState(ferment);
   const kind = KIND_RULES[ferment.kind];
   const last = ferment.lastFeeding;
   const line =
     ferment.family === "keep"
       ? last
-        ? `Gefüttert ${ago(last.fedAt)} (${last.ratio})`
+        ? `Gefüttert ${ago(last.fedAt)} · ${last.ratio}`
         : "Noch nie gefüttert"
       : state.next;
   return (
     <li>
-      <Link className="st-card" to={`/${ferment.id}`}>
-        <Pet kind={ferment.kind} mood={ferment.archived ? "sleeping" : state.mood} size={44} />
-        <span>
-          <strong>
+      <Link className="st-row" to={`/${ferment.id}`} data-tone={ferment.archived ? "rest" : state.tone}>
+        <span className="st-row-jar">
+          <Pet kind={ferment.kind} mood={ferment.archived ? "sleeping" : state.mood} size={46} />
+        </span>
+        <span className="st-row-body">
+          <span className="st-row-kind">{kind.label}</span>
+          <span className="st-row-title">
             {ferment.name}
-            {!ferment.archived && <span className="st-badge">{MOOD_LABEL[state.mood]}</span>}
-          </strong>
-          <span className="st-quiet">
-            {kind.emoji} {kind.label}
-            {ferment.family === "keep" && ` · ${ferment.flour} · ${ferment.hydration} %`}
+            {!ferment.archived && <span className="st-tag">{MOOD_LABEL[state.mood]}</span>}
           </span>
           {line && <span className="st-quiet">{line}</span>}
           {!ferment.archived && state.meter && <Meter {...state.meter} />}
         </span>
+        <ChevronRight aria-hidden size={20} className="st-row-chevron" />
       </Link>
     </li>
   );
@@ -127,17 +173,19 @@ function KindPage() {
         <ArrowLeft aria-hidden size={18} /> Alle Fermente
       </Link>
       <h1>Was setzt du an?</h1>
-      <ul className="st-kinds">
+      <ul className="st-rows">
         {KINDS.map((kind) => (
           <li key={kind}>
-            <Link className="st-card st-kind" to={`/neu/${kind}`}>
-              <Pet kind={kind} mood={rules(kind).family === "keep" ? "rising" : "bubbling"} size={44} />
-              <span>
-                <strong>
-                  {KIND_RULES[kind].emoji} {KIND_RULES[kind].label}
-                </strong>
+            <Link className="st-row" to={`/neu/${kind}`} data-tone="rest">
+              <span className="st-row-jar">
+                <Pet kind={kind} mood={rules(kind).family === "keep" ? "rising" : "bubbling"} size={46} />
+              </span>
+              <span className="st-row-body">
+                <span className="st-row-kind">{rules(kind).family === "keep" ? "Pflegen" : "Charge"}</span>
+                <span className="st-row-title">{KIND_RULES[kind].label}</span>
                 <span className="st-quiet">{KIND_RULES[kind].blurb}</span>
               </span>
+              <ChevronRight aria-hidden size={20} className="st-row-chevron" />
             </Link>
           </li>
         ))}
@@ -292,17 +340,15 @@ function FermentPage() {
       {ferment.error && <Problem error={ferment.error} retry={() => ferment.refetch()} />}
       {data && (
         <>
-          <header>
-            <h1>{data.name}</h1>
-            <p className="st-quiet">
-              {KIND_RULES[data.kind].emoji} {KIND_RULES[data.kind].label}
-              {data.family === "keep" && ` · ${data.flour} · ${data.hydration} %`}
-              {data.family === "batch" && data.temperature !== null && ` · ${data.temperature.toLocaleString("de-DE")} °C`}
-              {data.archived && " · archiviert"}
+          <header className="st-title">
+            <p className="st-kicker">
+              {KIND_RULES[data.kind].label}
+              {data.archived && <span className="st-tag">archiviert</span>}
             </p>
-            {data.notes && <p className="st-notes">{data.notes}</p>}
+            <h1>{data.name}</h1>
           </header>
           {!data.archived && <PetPanel ferment={data} onChange={refresh} />}
+          <FermentLabel ferment={data} />
           {data.family === "keep" ? (
             <>
               {!data.archived && (
@@ -319,7 +365,12 @@ function FermentPage() {
               <EventList ferment={data} onChange={refresh} />
             </>
           )}
-          <button type="button" className="st-button" disabled={archive.isPending} onClick={() => archive.mutate(!data.archived)}>
+          <button
+            type="button"
+            className="st-button st-button-quiet"
+            disabled={archive.isPending}
+            onClick={() => archive.mutate(!data.archived)}
+          >
             {data.archived ? "Wieder aktivieren" : "Archivieren"}
           </button>
         </>
@@ -328,26 +379,70 @@ function FermentPage() {
   );
 }
 
-/** The pet with its mood, what comes next, and the actions that fit its kind. */
+/** The pet with its mood, what comes next, and the actions that fit its kind. Its wash follows the mood. */
 function PetPanel({ ferment, onChange }: { ferment: FermentDetail; onChange: () => Promise<unknown> }) {
   const state = useLiveState(ferment);
-  const since = ferment.family === "keep" ? age(ferment.startedAt) : null;
   return (
-    <section className="st-pet-panel" aria-label="Zustand">
-      <Pet kind={ferment.kind} mood={state.mood} size={112} />
-      <div className="st-pet-info">
-        <p className="st-pet-mood">{MOOD_LABEL[state.mood]}</p>
-        <p className="st-pet-says">„{state.says}“</p>
-        {state.meter && <Meter {...state.meter} />}
-        <p className="st-quiet">{[state.next, since].filter(Boolean).join(" · ")}</p>
+    <section className="st-hero" data-tone={state.tone} aria-label="Zustand">
+      <div className="st-hero-top">
+        <span className="st-hero-jar">
+          <Pet kind={ferment.kind} mood={state.mood} size={104} />
+        </span>
+        <div className="st-hero-info">
+          <span className="st-tag">{MOOD_LABEL[state.mood]}</span>
+          <p className="st-hero-says">{state.says}</p>
+          {state.next && <p className="st-quiet">{state.next}</p>}
+          {state.meter && <Meter {...state.meter} />}
+        </div>
       </div>
-      <div className="st-pet-actions">
+      <div className="st-hero-actions">
         {ferment.family === "keep" ? (
           <KeepActions ferment={ferment} onChange={onChange} />
         ) : (
           <BatchActions ferment={ferment} onChange={onChange} />
         )}
       </div>
+    </section>
+  );
+}
+
+/** The facts as a jar label, like the nutrition label in food: the one loud element on the page. */
+function FermentLabel({ ferment }: { ferment: FermentDetail }) {
+  const state = useLiveState(ferment);
+  const rows: [string, string][] = [];
+  if (ferment.family === "keep") {
+    rows.push(["Mehl", ferment.flour], ["Hydration", `${ferment.hydration} %`]);
+    if (ferment.lastFeeding) rows.push(["Letzte Fütterung", `${ago(ferment.lastFeeding.fedAt)} · ${ferment.lastFeeding.ratio}`]);
+    if (ferment.fridgeSince) rows.push(["Kühlschrank", `seit ${ago(ferment.fridgeSince).replace(/^vor /, "")}`]);
+    rows.push(["Alter", age(ferment.startedAt)]);
+  } else {
+    const batch = batchMood(ferment);
+    rows.push(["Angesetzt", fedAt(ferment.startedAt)]);
+    if (batch.stageIndex > 0 || batch.stage.next) rows.push(["Stufe", batch.stage.label]);
+    const kindRules = rules(ferment.kind);
+    const temperature = ferment.temperature ?? (kindRules.family === "batch" ? kindRules.defaultTemperature : null);
+    if (temperature !== null) rows.push(["Raum", `${temperature.toLocaleString("de-DE")} °C`]);
+    if (batch.mood !== "done") rows.push(["Bereit", `${whenDay(batch.readyAt)} bis ${whenDay(batch.bestUntil)}`]);
+  }
+  const big = state.meter ? `${Math.round(state.meter.value * 100)} %` : "–";
+  return (
+    <section className="st-label" aria-label="Etikett">
+      <h2 className="st-label-title">{KIND_RULES[ferment.kind].label}</h2>
+      <table>
+        <tbody>
+          <tr className="st-label-big">
+            <th scope="row">{state.meter?.label ?? "Zustand"}</th>
+            <td>{big}</td>
+          </tr>
+          {rows.map(([label, value]) => (
+            <tr key={label}>
+              <th scope="row">{label}</th>
+              <td>{value}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+      {ferment.notes && <p className="st-label-note">{ferment.notes}</p>}
     </section>
   );
 }
