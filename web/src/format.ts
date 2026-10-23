@@ -43,3 +43,10 @@ export function age(bornAt: string, now = Date.now()): string {
 }
 
 export const hours = (value: number) => `${value.toLocaleString("de-DE")} Std.`;
+
+const date = new Intl.DateTimeFormat("de-DE", { timeZone: "Europe/Berlin", weekday: "short", day: "numeric", month: "short" });
+
+/** Like `when` within two days, further out only the day: "Sa., 21. Nov.". */
+export function whenDay(iso: string, now = Date.now()): string {
+  return Math.abs(Date.parse(iso) - now) < 2 * 86_400_000 ? when(iso, now) : date.format(new Date(iso));
+}

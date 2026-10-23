@@ -1,6 +1,6 @@
 # CLAUDE.md
 
-Sauerteig für Flo: Starter pflegen und Fütterungen festhalten. Läuft als Plugin in food (`Zweig-Flo/food`, `docs/plugins.md`) unter <https://eat.five.beer/plugins/sauerteig>. Überblick und Betrieb: [`README.md`](README.md).
+Fermente für Flo als Tamagotchi: Sauerteig pflegen, Kimchi, Sauerkraut und Kombucha ansetzen. Arten und Regeln in `shared/kinds.ts`. Läuft als Plugin in food (`Zweig-Flo/food`, `docs/plugins.md`) unter <https://eat.five.beer/plugins/sauerteig>. Überblick und Betrieb: [`README.md`](README.md).
 
 ## Stack und Befehle
 
