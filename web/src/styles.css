@@ -1,0 +1,191 @@
+/* Sauerteig inside food: every class starts with st-, so nothing clashes with food's styles. Colours, font and dark
+   mode come from food's design tokens on :root; the fallbacks only matter outside food. */
+
+.st-app {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  color: var(--ink, #15202b);
+}
+
+.st-app h1 {
+  margin: 0;
+}
+
+.st-app h2 {
+  margin: 0 0 8px;
+}
+
+.st-app p {
+  margin: 0;
+}
+
+.st-head {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.st-quiet {
+  color: var(--muted, #56616b);
+  font-size: 14px;
+}
+
+.st-error {
+  color: var(--tomato, #b8322a);
+}
+
+.st-problem {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 8px;
+}
+
+.st-back {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  color: var(--cobalt, #1f45b5);
+  text-decoration: none;
+  font-weight: 600;
+}
+
+.st-button,
+.st-icon-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 44px;
+  border-radius: 10px;
+  font: inherit;
+  font-weight: 650;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.st-button {
+  align-self: flex-start;
+  padding: 0 16px;
+  border: 1.5px solid var(--ink, #15202b);
+  background: transparent;
+  color: var(--ink, #15202b);
+}
+
+.st-button-primary {
+  border-color: var(--cobalt-fill, #1f45b5);
+  background: var(--cobalt-fill, #1f45b5);
+  color: var(--on-fill, #fff);
+}
+
+.st-button:disabled,
+.st-icon-button:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+
+.st-icon-button {
+  width: 44px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--ink, #15202b);
+}
+
+.st-list,
+.st-feedings {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.st-card {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 12px;
+  padding: 14px 16px;
+  border: 1px solid var(--line, #d3d9dc);
+  border-radius: 12px;
+  background: var(--surface, #fff);
+  color: inherit;
+  text-decoration: none;
+}
+
+.st-card > span,
+.st-feedings li > span {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.st-icon {
+  color: var(--cobalt, #1f45b5);
+}
+
+.st-feedings li {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 0;
+  border-bottom: 1px solid var(--line, #d3d9dc);
+}
+
+.st-archived summary {
+  cursor: pointer;
+  color: var(--muted, #56616b);
+  margin-bottom: 8px;
+}
+
+.st-notes {
+  margin-top: 8px;
+  white-space: pre-line;
+}
+
+.st-form {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.st-feed {
+  padding: 16px;
+  border-radius: 12px;
+  background: var(--surface, #fff);
+  border: 1px solid var(--line, #d3d9dc);
+}
+
+.st-form label {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.st-form input,
+.st-form textarea {
+  min-height: 44px;
+  padding: 8px 12px;
+  border: 1.5px solid var(--line, #d3d9dc);
+  border-radius: 10px;
+  background: var(--bg, #eef1f0);
+  color: inherit;
+  font: inherit;
+  font-weight: 400;
+}
+
+.st-grams {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+}
+
+.st-grams input {
+  width: 100%;
+}
