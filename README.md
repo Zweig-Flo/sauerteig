@@ -66,6 +66,10 @@ npm run build      # web/dist für food
 
 Zusammen mit food: hier `npm run build` und `npm run dev`, in food `PLUGIN_SAUERTEIG_URL=http://localhost:3100 npm run dev`, dann `/plugins/sauerteig`.
 
+## Vorschau ohne food
+
+`npm run build:preview` baut die ganze App als eine statische Seite (`preview/dist/index.html`, als Artifact-Body `preview/dist/fermente.html`). Die Hono-API läuft dabei im Browser und beantwortet `fetch()` direkt in der Seite. SQLite läuft als WASM (sql.js), die Datenbank liegt im `localStorage`. Aliase in `vite.preview.config.ts` tauschen `node:sqlite` und `node:crypto` gegen Browser-Versionen aus `preview/src/`. Beim ersten Öffnen legt die Vorschau Beispiele an. Sie braucht keinen Server und keine Secrets und lässt sich auf jedem statischen Hosting ablegen.
+
 ## Deployment
 
 Coolify, zweite App `sauerteig` aus diesem `Dockerfile` (Typecheck und Tests laufen im Build), **ohne öffentliche Domain**, im selben Netz wie food. Persistentes Volume auf `/app/data`.

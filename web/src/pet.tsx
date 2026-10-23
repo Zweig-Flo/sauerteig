@@ -25,7 +25,7 @@ export const MOOD_LABEL: Record<AnyMood, string> = {
   sleeping: "Schläft",
   fresh: "Frisch angesetzt",
   bubbling: "Blubbert",
-  burp: "Will entlüftet werden",
+  burp: "Entlüften!",
   ready: "Bereit",
   overripe: "Überreif",
   done: "Fertig",

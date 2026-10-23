@@ -203,6 +203,7 @@
   font-size: 12px;
   font-weight: 600;
   vertical-align: 2px;
+  white-space: nowrap;
 }
 
 .st-pet-actions {
@@ -277,6 +278,8 @@
 /* Each kind has its own colour in the jar, the only own colours; mixed with food's surface so they follow dark mode. */
 .st-pet {
   --st-dough: color-mix(in srgb, #e2c48e 75%, var(--surface, #fff));
+  /* The face sits on the light fill in both themes, so it stays dark. */
+  --st-face: #1d1a16;
 }
 
 .st-pet-kind-kimchi {
@@ -332,7 +335,7 @@
 .st-pet-line,
 .st-pet-streak {
   fill: none;
-  stroke: var(--ink, #15202b);
+  stroke: var(--st-face, #1d1a16);
   stroke-width: 2.4;
   stroke-linecap: round;
   stroke-linejoin: round;
@@ -345,7 +348,7 @@
 }
 
 .st-pet-ink {
-  fill: var(--ink, #15202b);
+  fill: var(--st-face, #1d1a16);
 }
 
 .st-pet-cheeks {
