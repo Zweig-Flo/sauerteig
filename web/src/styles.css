@@ -189,3 +189,244 @@
 .st-grams input {
   width: 100%;
 }
+
+.st-span-2 {
+  grid-column: span 2;
+}
+
+.st-badge {
+  margin-left: 8px;
+  padding: 1px 8px;
+  border-radius: 999px;
+  background: var(--bg, #eef1f0);
+  color: var(--muted, #56616b);
+  font-size: 12px;
+  font-weight: 600;
+  vertical-align: 2px;
+}
+
+.st-pet-panel .st-actions,
+.st-pet-panel > .st-error {
+  grid-column: 1 / -1;
+}
+
+.st-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+/* Hunger */
+
+.st-hunger {
+  height: 6px;
+  margin: 4px 0 2px;
+  max-width: 220px;
+  border-radius: 999px;
+  background: var(--line, #d3d9dc);
+  overflow: hidden;
+}
+
+.st-hunger > span {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: var(--cobalt, #1f45b5);
+  transition: width 0.4s ease;
+}
+
+.st-hunger[data-level="high"] > span {
+  background: var(--tomato, #b8322a);
+}
+
+/* The pet: the dough colour is the only own colour, mixed from food's surface so it follows dark mode. */
+
+.st-pet-panel {
+  --st-dough: color-mix(in srgb, #e2c48e 75%, var(--surface, #fff));
+  display: grid;
+  grid-template-columns: auto 1fr;
+  align-items: center;
+  gap: 16px;
+  padding: 16px;
+  border: 1px solid var(--line, #d3d9dc);
+  border-radius: 12px;
+  background: var(--surface, #fff);
+}
+
+.st-card {
+  --st-dough: color-mix(in srgb, #e2c48e 75%, var(--surface, #fff));
+  align-items: center;
+}
+
+.st-pet-info {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+}
+
+.st-pet-mood {
+  font-size: 20px;
+  font-weight: 750;
+}
+
+.st-pet-says {
+  font-style: italic;
+}
+
+.st-pet {
+  flex: none;
+  overflow: visible;
+}
+
+.st-pet-glass {
+  fill: color-mix(in srgb, var(--bg, #eef1f0) 60%, transparent);
+  stroke: var(--line, #d3d9dc);
+  stroke-width: 3;
+}
+
+.st-pet-lid {
+  fill: var(--muted, #56616b);
+}
+
+.st-pet-dough,
+.st-pet-shell {
+  fill: var(--st-dough, #ecd6a9);
+  stroke: color-mix(in srgb, var(--st-dough, #ecd6a9) 70%, var(--ink, #15202b));
+  stroke-width: 1.5;
+}
+
+.st-pet-crack,
+.st-pet-line,
+.st-pet-streak {
+  fill: none;
+  stroke: var(--ink, #15202b);
+  stroke-width: 2.4;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.st-pet-streak {
+  stroke: color-mix(in srgb, var(--st-dough, #ecd6a9) 70%, var(--ink, #15202b));
+  stroke-width: 1.5;
+  stroke-dasharray: 3 4;
+}
+
+.st-pet-eyes,
+.st-pet-mouth-open {
+  fill: var(--ink, #15202b);
+}
+
+.st-pet-cheeks {
+  fill: var(--tomato, #b8322a);
+  opacity: 0.35;
+}
+
+.st-pet-bubbles {
+  fill: color-mix(in srgb, var(--surface, #fff) 70%, transparent);
+  stroke: color-mix(in srgb, var(--st-dough, #ecd6a9) 60%, var(--ink, #15202b));
+  stroke-width: 0.8;
+}
+
+.st-pet-zzz {
+  fill: var(--muted, #56616b);
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.st-pet-sleeping .st-pet-dough {
+  fill: color-mix(in srgb, var(--st-dough, #ecd6a9) 82%, var(--cobalt, #1f45b5));
+}
+
+.st-pet-starving .st-pet-dough {
+  fill: color-mix(in srgb, var(--st-dough, #ecd6a9) 65%, var(--muted, #56616b));
+}
+
+.st-pet-body {
+  transform-box: fill-box;
+  transform-origin: 50% 100%;
+}
+
+.st-peak-row {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  align-items: end;
+  gap: 8px;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .st-pet-rising .st-pet-body,
+  .st-pet-full .st-pet-body {
+    animation: st-breathe 3.2s ease-in-out infinite;
+  }
+
+  .st-pet-peak .st-pet-body {
+    animation: st-bounce 0.9s ease-in-out infinite;
+  }
+
+  .st-pet-hungry .st-pet-body,
+  .st-pet-starving .st-pet-body {
+    animation: st-wobble 2.4s ease-in-out infinite;
+  }
+
+  .st-pet-egg .st-pet-body {
+    animation: st-wobble 1.6s ease-in-out infinite;
+  }
+
+  .st-pet-bubbles circle {
+    animation: st-bubble 2.4s ease-in infinite;
+  }
+
+  .st-pet-bubbles circle:nth-child(2) {
+    animation-delay: 0.8s;
+  }
+
+  .st-pet-bubbles circle:nth-child(3) {
+    animation-delay: 1.6s;
+  }
+
+  .st-pet-zzz {
+    animation: st-float 2.8s ease-in-out infinite;
+  }
+}
+
+@keyframes st-breathe {
+  50% {
+    transform: scaleY(1.04);
+  }
+}
+
+@keyframes st-bounce {
+  50% {
+    transform: translateY(-3px) scaleY(1.03);
+  }
+}
+
+@keyframes st-wobble {
+  25% {
+    transform: rotate(-2deg);
+  }
+  75% {
+    transform: rotate(2deg);
+  }
+}
+
+@keyframes st-bubble {
+  from {
+    transform: translateY(0);
+    opacity: 0;
+  }
+  20% {
+    opacity: 1;
+  }
+  to {
+    transform: translateY(-40px);
+    opacity: 0;
+  }
+}
+
+@keyframes st-float {
+  50% {
+    transform: translateY(-4px);
+  }
+}

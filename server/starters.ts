@@ -1,4 +1,5 @@
-import type { FeedingInput, StarterInput, StarterPatch } from "../shared/schema.ts";
+import { calibration, mood } from "../shared/mood.ts";
+import type { FeedingInput, FeedingObservation, StarterInput, StarterPatch } from "../shared/schema.ts";
 import { all, bool, get, HttpError, insert, now, run, transaction, update, type Db } from "./db.ts";
 
 interface StarterRow {
@@ -8,6 +9,7 @@ interface StarterRow {
   hydration: number;
   notes: string | null;
   archived: number;
+  fridge_since: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -20,6 +22,9 @@ interface FeedingRow {
   flour_grams: number;
   water_grams: number;
   note: string | null;
+  temperature: number | null;
+  peak_at: string | null;
+  rise_percent: number | null;
 }
 
 const toFeeding = (row: FeedingRow) => ({
@@ -32,6 +37,11 @@ const toFeeding = (row: FeedingRow) => ({
   /** Starter : flour : water relative to the starter, e.g. "1:5:5". */
   ratio: ratio(row),
   note: row.note,
+  temperature: row.temperature,
+  peakAt: row.peak_at,
+  risePercent: row.rise_percent,
+  /** Hours from feeding to the observed peak. */
+  peakHours: row.peak_at ? Math.round((Date.parse(row.peak_at) - Date.parse(row.fed_at)) / 360_000) / 10 : null,
 });
 
 export type Feeding = ReturnType<typeof toFeeding>;
@@ -42,7 +52,10 @@ function ratio({ starter_grams, flour_grams, water_grams }: FeedingRow): string 
   return `1:${part(flour_grams)}:${part(water_grams)}`;
 }
 
-function toStarter(row: StarterRow, last: FeedingRow | undefined) {
+function toStarter(row: StarterRow, recent: FeedingRow[]) {
+  const feedings = recent.map(toFeeding);
+  const last = feedings[0] ?? null;
+  const state = { lastFeeding: last, fridgeSince: row.fridge_since, calibration: calibration(feedings) };
   return {
     id: row.id,
     name: row.name,
@@ -50,14 +63,18 @@ function toStarter(row: StarterRow, last: FeedingRow | undefined) {
     hydration: row.hydration,
     notes: row.notes,
     archived: bool(row.archived),
-    lastFeeding: last ? toFeeding(last) : null,
+    bornAt: row.created_at,
+    ...state,
+    /** At the time of the request; the web app recomputes it live from the fields above. */
+    mood: mood(state),
   };
 }
 
 export type Starter = ReturnType<typeof toStarter>;
 
-const lastFeeding = (db: Db, starterId: number) =>
-  get<FeedingRow>(db, "SELECT * FROM feedings WHERE starter_id = ? ORDER BY fed_at DESC, id DESC LIMIT 1", starterId);
+/** Enough feedings for the last one and the calibration. */
+const recentFeedings = (db: Db, starterId: number) =>
+  all<FeedingRow>(db, "SELECT * FROM feedings WHERE starter_id = ? ORDER BY fed_at DESC, id DESC LIMIT 10", starterId);
 
 function starterRow(db: Db, id: number): StarterRow {
   const row = get<StarterRow>(db, "SELECT * FROM starters WHERE id = ?", id);
@@ -68,12 +85,12 @@ function starterRow(db: Db, id: number): StarterRow {
 /** Active starters first, the most recently fed on top. */
 export function listStarters(db: Db) {
   return all<StarterRow>(db, "SELECT * FROM starters ORDER BY archived, name")
-    .map((row) => toStarter(row, lastFeeding(db, row.id)))
+    .map((row) => toStarter(row, recentFeedings(db, row.id)))
     .sort((a, b) => Number(a.archived) - Number(b.archived) || (b.lastFeeding?.fedAt ?? "").localeCompare(a.lastFeeding?.fedAt ?? ""));
 }
 
 export function getStarter(db: Db, id: number) {
-  return { ...toStarter(starterRow(db, id), lastFeeding(db, id)), feedings: listFeedings(db, id) };
+  return { ...toStarter(starterRow(db, id), recentFeedings(db, id)), feedings: listFeedings(db, id) };
 }
 
 function nameTaken(db: Db, name: string, except = 0) {
@@ -97,7 +114,7 @@ export function createStarter(db: Db, input: StarterInput) {
 
 export function patchStarter(db: Db, id: number, patch: StarterPatch) {
   return transaction(db, () => {
-    starterRow(db, id);
+    const row = starterRow(db, id);
     if (patch.name !== undefined) nameTaken(db, patch.name, id);
     const values: Record<string, string | number | null> = { updated_at: now() };
     if (patch.name !== undefined) values.name = patch.name;
@@ -105,6 +122,8 @@ export function patchStarter(db: Db, id: number, patch: StarterPatch) {
     if (patch.hydration !== undefined) values.hydration = patch.hydration;
     if (patch.notes !== undefined) values.notes = patch.notes;
     if (patch.archived !== undefined) values.archived = patch.archived ? 1 : 0;
+    // Putting it in twice keeps the first time.
+    if (patch.fridge !== undefined) values.fridge_since = patch.fridge ? (row.fridge_since ?? now()) : null;
     update(db, "starters", values, { id });
     return getStarter(db, id);
   });
@@ -129,9 +148,33 @@ export function addFeeding(db: Db, starterId: number, input: FeedingInput) {
     flour_grams: input.flourGrams,
     water_grams: input.waterGrams,
     note: input.note ?? null,
+    temperature: input.temperature ?? null,
     created_at: now(),
   });
-  return toFeeding(get<FeedingRow>(db, "SELECT * FROM feedings WHERE id = ?", id)!);
+  return toFeeding(feedingRow(db, id));
+}
+
+function feedingRow(db: Db, id: number): FeedingRow {
+  const row = get<FeedingRow>(db, "SELECT * FROM feedings WHERE id = ?", id);
+  if (!row) throw new HttpError(404, "Fütterung nicht gefunden");
+  return row;
+}
+
+/** Peak, rise and temperature seen after a feeding; they teach the mood when this starter peaks. */
+export function observeFeeding(db: Db, id: number, input: FeedingObservation) {
+  return transaction(db, () => {
+    const row = feedingRow(db, id);
+    const values: Record<string, string | number | null> = {};
+    if (input.peakAt !== undefined) {
+      const peakAt = input.peakAt === null ? null : new Date(input.peakAt).toISOString();
+      if (peakAt !== null && peakAt <= row.fed_at) throw new HttpError(422, "Der Höhepunkt kommt nach der Fütterung");
+      values.peak_at = peakAt;
+    }
+    if (input.risePercent !== undefined) values.rise_percent = input.risePercent;
+    if (input.temperature !== undefined) values.temperature = input.temperature;
+    if (Object.keys(values).length) update(db, "feedings", values, { id });
+    return toFeeding(feedingRow(db, id));
+  });
 }
 
 export function deleteFeeding(db: Db, id: number) {

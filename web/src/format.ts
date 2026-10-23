@@ -1,3 +1,5 @@
+import { berlinToday } from "../../shared/dates.ts";
+
 const time = new Intl.DateTimeFormat("de-DE", {
   timeZone: "Europe/Berlin",
   weekday: "short",
@@ -21,3 +23,23 @@ export function ago(iso: string, now = Date.now()): string {
 }
 
 export const grams = (value: number) => `${value.toLocaleString("de-DE")} g`;
+
+const clock = new Intl.DateTimeFormat("de-DE", { timeZone: "Europe/Berlin", hour: "2-digit", minute: "2-digit" });
+
+/** "heute 21:30", "morgen 07:10", otherwise like `fedAt`. */
+export function when(iso: string, now = Date.now()): string {
+  const day = berlinToday(new Date(iso));
+  if (day === berlinToday(new Date(now))) return `heute ${clock.format(new Date(iso))}`;
+  if (day === berlinToday(new Date(now + 86_400_000))) return `morgen ${clock.format(new Date(iso))}`;
+  if (day === berlinToday(new Date(now - 86_400_000))) return `gestern ${clock.format(new Date(iso))}`;
+  return fedAt(iso);
+}
+
+/** "heute geschlüpft", "1 Tag alt", "12 Tage alt". */
+export function age(bornAt: string, now = Date.now()): string {
+  const days = Math.max(0, Math.floor((now - Date.parse(bornAt)) / 86_400_000));
+  if (days === 0) return "heute geschlüpft";
+  return days === 1 ? "1 Tag alt" : `${days} Tage alt`;
+}
+
+export const hours = (value: number) => `${value.toLocaleString("de-DE")} Std.`;

@@ -63,3 +63,30 @@ test("feedings: ratio, newest first, last feeding on the starter", async () => {
   assert.equal((await call("DELETE", `/feedings/${starter.feedings[0].id}`)).status, 404);
   assert.equal((await call("GET", "/starters")).body[0].lastFeeding.ratio, "1:5:5");
 });
+
+test("tamagotchi: mood, observation, fridge", async () => {
+  const { call } = setup();
+  const { id } = (await call("POST", "/starters", STARTER)).body;
+  assert.equal((await call("GET", `/starters/${id}`)).body.mood.mood, "egg");
+
+  const fed = await call("POST", `/starters/${id}/feedings`, { starterGrams: 50, flourGrams: 50, waterGrams: 50, temperature: 24 });
+  assert.equal(fed.body.temperature, 24);
+  const starter = (await call("GET", `/starters/${id}`)).body;
+  assert.equal(starter.mood.mood, "full");
+  assert.ok(starter.mood.peakAt);
+
+  const before = new Date(Date.parse(fed.body.fedAt) - 60_000).toISOString();
+  assert.equal((await call("PATCH", `/feedings/${fed.body.id}`, { peakAt: before })).status, 422);
+  const peakAt = new Date(Date.parse(fed.body.fedAt) + 4 * 3_600_000).toISOString();
+  const observed = await call("PATCH", `/feedings/${fed.body.id}`, { peakAt, risePercent: 150 });
+  assert.equal(observed.body.peakHours, 4);
+  assert.equal(observed.body.risePercent, 150);
+  assert.equal((await call("GET", `/starters/${id}`)).body.calibration, 0.8);
+  assert.equal((await call("PATCH", "/feedings/999", { risePercent: 1 })).status, 404);
+
+  const cold = await call("PATCH", `/starters/${id}`, { fridge: true });
+  assert.equal(cold.body.mood.mood, "sleeping");
+  const again = await call("PATCH", `/starters/${id}`, { fridge: true });
+  assert.equal(again.body.fridgeSince, cold.body.fridgeSince);
+  assert.equal((await call("PATCH", `/starters/${id}`, { fridge: false })).body.fridgeSince, null);
+});

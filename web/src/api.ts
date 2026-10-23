@@ -1,6 +1,6 @@
 import { DetailedError, hc, parseResponse, type ClientResponse } from "hono/client";
 import type { ApiType } from "../../server/app.ts";
-import type { FeedingInput, StarterInput, StarterPatch } from "../../shared/schema.ts";
+import type { FeedingInput, FeedingObservation, StarterInput, StarterPatch } from "../../shared/schema.ts";
 
 export class ApiError extends Error {
   /** HTTP status, 0 when the server could not be reached. */
@@ -37,6 +37,8 @@ export function createApi(apiBase: string) {
       data(client.starters[":id"].$patch({ param: id(starterId), json })),
     feed: (starterId: number, json: FeedingInput) =>
       data(client.starters[":id"].feedings.$post({ param: id(starterId), json })),
+    observeFeeding: (feedingId: number, json: FeedingObservation) =>
+      data(client.feedings[":id"].$patch({ param: id(feedingId), json })),
     deleteFeeding: (feedingId: number) => data(client.feedings[":id"].$delete({ param: id(feedingId) })),
   };
 }

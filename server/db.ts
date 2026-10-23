@@ -28,6 +28,12 @@ const MIGRATIONS = [
   );
   CREATE INDEX feedings_starter ON feedings (starter_id, fed_at);
   `,
+  `
+  ALTER TABLE starters ADD COLUMN fridge_since TEXT;
+  ALTER TABLE feedings ADD COLUMN temperature REAL;
+  ALTER TABLE feedings ADD COLUMN peak_at TEXT;
+  ALTER TABLE feedings ADD COLUMN rise_percent INTEGER;
+  `,
 ];
 
 export function openDatabase(file: string): Db {

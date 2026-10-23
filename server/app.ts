@@ -1,10 +1,10 @@
 import { zValidator } from "@hono/zod-validator";
 import { Hono, type ValidationTargets } from "hono";
 import { z } from "zod";
-import { feedingInput, starterInput, starterPatch } from "../shared/schema.ts";
+import { feedingInput, feedingObservation, starterInput, starterPatch } from "../shared/schema.ts";
 import { requirePlugin, type AuthEnv } from "./auth.ts";
 import { HttpError, type Db } from "./db.ts";
-import { addFeeding, createStarter, deleteFeeding, getStarter, listStarters, patchStarter } from "./starters.ts";
+import { addFeeding, createStarter, deleteFeeding, getStarter, listStarters, observeFeeding, patchStarter } from "./starters.ts";
 
 export interface AppOptions {
   db: Db;
@@ -37,6 +37,9 @@ export function createApi({ db, secret }: AppOptions) {
     )
     .post("/starters/:id/feedings", validate("param", idParam), validate("json", feedingInput), (c) =>
       c.json(addFeeding(db, c.req.valid("param").id, c.req.valid("json")), 201),
+    )
+    .patch("/feedings/:id", validate("param", idParam), validate("json", feedingObservation), (c) =>
+      c.json(observeFeeding(db, c.req.valid("param").id, c.req.valid("json"))),
     )
     .delete("/feedings/:id", validate("param", idParam), (c) => {
       deleteFeeding(db, c.req.valid("param").id);

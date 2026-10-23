@@ -2,6 +2,7 @@
 import { z } from "zod";
 
 const grams = z.number().min(0).max(5000);
+const temperature = z.number().min(-30).max(50);
 
 export const starterInput = z.object({
   name: z.string().trim().min(1, "Name fehlt").max(60),
@@ -12,7 +13,11 @@ export const starterInput = z.object({
 });
 export type StarterInput = z.infer<typeof starterInput>;
 
-export const starterPatch = starterInput.partial().extend({ archived: z.boolean().optional() });
+export const starterPatch = starterInput.partial().extend({
+  archived: z.boolean().optional(),
+  /** true puts it into the fridge (from now), false takes it out. */
+  fridge: z.boolean().optional(),
+});
 export type StarterPatch = z.infer<typeof starterPatch>;
 
 export const feedingInput = z.object({
@@ -22,5 +27,17 @@ export const feedingInput = z.object({
   flourGrams: grams.refine((value) => value > 0, "Ohne Mehl ist es keine Fütterung"),
   waterGrams: grams,
   note: z.string().trim().max(500).nullish(),
+  /** Room temperature in °C. */
+  temperature: temperature.nullish(),
 });
 export type FeedingInput = z.infer<typeof feedingInput>;
+
+/** What was seen after a feeding; null clears a value. */
+export const feedingObservation = z.object({
+  /** When it stood highest; must be after the feeding. */
+  peakAt: z.iso.datetime({ offset: true }).nullish(),
+  /** How much it grew, 100 = doubled. */
+  risePercent: z.number().int().min(0).max(1000).nullish(),
+  temperature: temperature.nullish(),
+});
+export type FeedingObservation = z.infer<typeof feedingObservation>;
