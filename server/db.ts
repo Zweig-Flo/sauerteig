@@ -77,6 +77,8 @@ const MIGRATIONS = [
   );
   CREATE INDEX events_ferment ON events (ferment_id, at);
   `,
+  // Variants of a kind (shared/catalog), e.g. kkakdugi for kimchi.
+  `ALTER TABLE ferments ADD COLUMN variant TEXT;`,
 ];
 
 export function openDatabase(file: string): Db {

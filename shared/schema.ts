@@ -1,10 +1,11 @@
 // Inputs of the API, checked on the server and typed in the web app. New fields go here first.
 import { z } from "zod";
 import { EVENT_KINDS } from "./batch.ts";
-import { KINDS } from "./kinds.ts";
+import { isVariant, KINDS, rules } from "./kinds.ts";
 
 const grams = z.number().min(0).max(5000);
-const temperature = z.number().min(-30).max(50);
+// Up to 70 °C: amazake and yogurt are kept warm.
+const temperature = z.number().min(-30).max(70);
 
 const fermentFields = z.object({
   name: z.string().trim().min(1, "Name fehlt").max(60),
@@ -13,8 +14,10 @@ const fermentFields = z.object({
   flour: z.string().trim().min(1, "Mehl fehlt").max(60).nullish(),
   /** Sourdough only: water per flour in percent, 100 = equal parts. */
   hydration: z.number().int().min(40).max(200).nullish(),
-  /** Batches: room temperature in °C; null = the kind's default. */
+  /** Batches and cultures: room temperature in °C; null = the kind's default. */
   temperature: temperature.nullish(),
+  /** A variant of the kind, see `variants` in shared/catalog; null = the plain recipe. */
+  variant: z.string().trim().min(1).max(40).nullish(),
 });
 
 export const fermentInput = fermentFields
@@ -24,7 +27,9 @@ export const fermentInput = fermentFields
     startedAt: z.iso.datetime({ offset: true }).optional(),
   })
   .superRefine((input, ctx) => {
-    if (input.kind !== "sourdough") return;
+    if (input.variant && !isVariant(input.kind, input.variant))
+      ctx.addIssue({ code: "custom", path: ["variant"], message: `${rules(input.kind).label} gibt es nicht als „${input.variant}“` });
+    if (rules(input.kind).family !== "keep") return;
     if (!input.flour) ctx.addIssue({ code: "custom", path: ["flour"], message: "Mehl fehlt" });
     if (input.hydration == null) ctx.addIssue({ code: "custom", path: ["hydration"], message: "Hydration fehlt" });
   });
@@ -32,12 +37,12 @@ export type FermentInput = z.infer<typeof fermentInput>;
 
 export const fermentPatch = fermentFields.partial().extend({
   archived: z.boolean().optional(),
-  /** true puts it into the fridge (from now), false takes it out. */
+  /** Keeps and cultures: true puts it into the fridge (from now), false takes it out. */
   fridge: z.boolean().optional(),
 });
 export type FermentPatch = z.infer<typeof fermentPatch>;
 
-/** Burped, tasted, moved on to the next stage or done; batches only except for tasting. */
+/** Burped (or stirred, turned), tasted, next stage, done, or tended (`feed`, cultures only). */
 export const eventInput = z.object({
   kind: z.enum(EVENT_KINDS),
   /** ISO time; missing = now. */
