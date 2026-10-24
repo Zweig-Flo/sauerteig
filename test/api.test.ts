@@ -96,7 +96,7 @@ test("sourdough needs flour and hydration, batches don't", async () => {
   const missing = await call("POST", "/ferments", { kind: "sourdough", name: "Ohne Mehl" });
   assert.equal(missing.status, 422);
   assert.deepEqual(missing.body.issues.map((i: any) => i.path).sort(), ["flour", "hydration"]);
-  assert.equal((await call("POST", "/ferments", { kind: "miso", name: "X" })).status, 422);
+  assert.equal((await call("POST", "/ferments", { kind: "bier", name: "X" })).status, 422);
   const kimchi = await call("POST", "/ferments", { kind: "kimchi", name: "Kimchi", flour: "egal" });
   assert.equal(kimchi.status, 201);
   assert.equal(kimchi.body.family, "batch");
@@ -107,7 +107,7 @@ test("sourdough needs flour and hydration, batches don't", async () => {
 test("batches: burp, stage, done; no feedings, no fridge", async () => {
   const { call } = setup();
   const days = (n: number) => new Date(Date.now() - n * 86_400_000).toISOString();
-  const { id } = (await call("POST", "/ferments", { kind: "kombucha", name: "Tee", startedAt: days(8), temperature: 22 })).body;
+  const { id } = (await call("POST", "/ferments", { kind: "kombucha", name: "Tee", startedAt: days(8), temperature: 24 })).body;
   let tea = (await call("GET", `/ferments/${id}`)).body;
   assert.equal(tea.batch.mood, "ready");
   assert.equal(tea.batch.stage.label, "1. Gärung");
@@ -131,4 +131,45 @@ test("batches: burp, stage, done; no feedings, no fridge", async () => {
   assert.equal((await call("POST", `/ferments/${id}/events`, { kind: "burp" })).status, 422);
   assert.equal((await call("DELETE", `/events/${tea.events[0].id}`)).status, 200);
   assert.equal((await call("DELETE", `/events/${tea.events[0].id}`)).status, 404);
+});
+
+test("variants: stored, checked against the kind, changeable", async () => {
+  const { call } = setup();
+  const radish = await call("POST", "/ferments", { kind: "kimchi", variant: "kkakdugi", name: "Rettich" });
+  assert.equal(radish.status, 201);
+  assert.equal(radish.body.variant, "kkakdugi");
+  const wrong = await call("POST", "/ferments", { kind: "kimchi", variant: "jun", name: "Falsch" });
+  assert.equal(wrong.status, 422);
+  assert.deepEqual(wrong.body.issues.map((i: any) => i.path), ["variant"]);
+  assert.equal((await call("PATCH", `/ferments/${radish.body.id}`, { variant: "jun" })).status, 422);
+  assert.equal((await call("PATCH", `/ferments/${radish.body.id}`, { variant: null })).body.variant, null);
+
+  // A variant brings its own stages: cucumber kimchi is ready after half a day.
+  const days = (n: number) => new Date(Date.now() - n * 86_400_000).toISOString();
+  const cucumber = await call("POST", "/ferments", { kind: "kimchi", variant: "oi-sobagi", name: "Gurke", startedAt: days(0.6), temperature: 20 });
+  assert.equal(cucumber.body.batch.mood, "ready");
+});
+
+test("cultures: tended, not fed; fridge; a fresh viili leaves the fridge", async () => {
+  const { call } = setup();
+  const kefir = await call("POST", "/ferments", { kind: "water-kefir", name: "Kristalle" });
+  assert.equal(kefir.status, 201);
+  assert.equal(kefir.body.family, "culture");
+  assert.equal(kefir.body.culture.mood, "full");
+  const id = kefir.body.id;
+  assert.equal((await call("POST", `/ferments/${id}/feedings`, { starterGrams: 1, flourGrams: 1, waterGrams: 1 })).status, 422);
+  assert.equal((await call("POST", `/ferments/${id}/events`, { kind: "burp" })).status, 422);
+  assert.equal((await call("POST", `/ferments/${id}/events`, { kind: "feed" })).status, 201);
+  assert.equal((await call("PATCH", `/ferments/${id}`, { fridge: true })).body.culture.mood, "sleeping");
+  // Tending kefir keeps it in the fridge.
+  await call("POST", `/ferments/${id}/events`, { kind: "feed" });
+  assert.ok((await call("GET", `/ferments/${id}`)).body.fridgeSince);
+
+  const viili = (await call("POST", "/ferments", { kind: "viili", name: "Viili" })).body;
+  await call("PATCH", `/ferments/${viili.id}`, { fridge: true });
+  await call("POST", `/ferments/${viili.id}/events`, { kind: "feed" });
+  assert.equal((await call("GET", `/ferments/${viili.id}`)).body.fridgeSince, null);
+
+  const kraut = (await call("POST", "/ferments", { kind: "sauerkraut", name: "Kraut" })).body;
+  assert.equal((await call("POST", `/ferments/${kraut.id}/events`, { kind: "feed" })).status, 422);
 });

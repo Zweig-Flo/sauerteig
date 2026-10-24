@@ -60,7 +60,7 @@ window.fetch = async (input, init) => {
 
 const hoursAgo = (hours: number) => new Date(Date.now() - hours * 3_600_000).toISOString();
 
-/** Four example ferments in different moods, so the first view shows what the app does. */
+/** Example ferments of every family in different moods, so the first view shows what the app does. */
 async function seed() {
   const post = (path: string, body: unknown) =>
     app.request(`/api${path}`, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(body) });
@@ -74,7 +74,10 @@ async function seed() {
   await post(`/ferments/${kimchi}/events`, { kind: "burp", at: hoursAgo(26) });
   const kraut = await id(post("/ferments", { kind: "sauerkraut", name: "Weißkraut (Beispiel)", startedAt: hoursAgo(16 * 24), temperature: 19 }));
   await post(`/ferments/${kraut}/events`, { kind: "taste", at: hoursAgo(24), note: "Schon schön sauer, noch knackig" });
+  await post(`/ferments/${kraut}/events`, { kind: "burp", at: hoursAgo(20) });
   await post("/ferments", { kind: "kombucha", name: "Grüntee-Kombucha (Beispiel)", startedAt: hoursAgo(5 * 24), temperature: 23 });
+  await post("/ferments", { kind: "water-kefir", name: "Wasserkefir (Beispiel)", startedAt: hoursAgo(40), temperature: 22 });
+  await post("/ferments", { kind: "kimchi", variant: "kkakdugi", name: "Kkakdugi (Beispiel)", startedAt: hoursAgo(10), temperature: 21 });
   save(db);
 }
 

@@ -1,5 +1,6 @@
 import { batchMood, type EventKind } from "../shared/batch.ts";
-import { isKind, rules, type Kind } from "../shared/kinds.ts";
+import { cultureMood } from "../shared/culture.ts";
+import { feedOf, isKind, isVariant, rules, type Kind } from "../shared/kinds.ts";
 import { calibration, mood } from "../shared/mood.ts";
 import type { EventInput, FeedingInput, FeedingObservation, FermentInput, FermentPatch } from "../shared/schema.ts";
 import { all, bool, get, HttpError, insert, now, run, transaction, update, type Db } from "./db.ts";
@@ -8,6 +9,7 @@ interface FermentRow {
   id: number;
   kind: string;
   name: string;
+  variant: string | null;
   flour: string | null;
   hydration: number | null;
   notes: string | null;
@@ -72,12 +74,16 @@ function kindOf(row: FermentRow): Kind {
   return row.kind;
 }
 
-/** A ferment with its state: `keep` for one that gets fed, `batch` for one that ripens. Mood at the time of the request. */
+/**
+ * A ferment with its state: `keep` for a starter that gets fed, `culture` for one that gets tended on a rhythm, `batch`
+ * for one that ripens. Mood at the time of the request.
+ */
 function toFerment(db: Db, row: FermentRow) {
   const kind = kindOf(row);
   const base = {
     id: row.id,
     kind,
+    variant: row.variant,
     name: row.name,
     notes: row.notes,
     temperature: row.temperature,
@@ -96,6 +102,22 @@ function toFerment(db: Db, row: FermentRow) {
       ...state,
       /** The web app recomputes it live from the fields above. */
       keep: mood(state),
+      culture: null,
+      batch: null,
+    };
+  }
+  if (rules(kind).family === "culture") {
+    const input = { kind, variant: row.variant, startedAt: row.started_at, temperature: row.temperature, events: base.events };
+    return {
+      ...base,
+      family: "culture" as const,
+      flour: null,
+      hydration: null,
+      lastFeeding: null,
+      fridgeSince: row.fridge_since,
+      calibration: 1,
+      keep: null,
+      culture: cultureMood({ ...input, fridgeSince: row.fridge_since }),
       batch: null,
     };
   }
@@ -108,7 +130,8 @@ function toFerment(db: Db, row: FermentRow) {
     fridgeSince: null,
     calibration: 1,
     keep: null,
-    batch: batchMood({ kind, startedAt: row.started_at, temperature: row.temperature, events: base.events }),
+    culture: null,
+    batch: batchMood({ kind, variant: row.variant, startedAt: row.started_at, temperature: row.temperature, events: base.events }),
   };
 }
 
@@ -148,12 +171,13 @@ function nameTaken(db: Db, name: string, except = 0) {
 export function createFerment(db: Db, input: FermentInput) {
   nameTaken(db, input.name);
   const stamp = now();
-  const sourdough = input.kind === "sourdough";
+  const keep = rules(input.kind).family === "keep";
   const { id } = insert(db, "ferments", {
     kind: input.kind,
+    variant: input.variant ?? null,
     name: input.name,
-    flour: sourdough ? (input.flour ?? null) : null,
-    hydration: sourdough ? (input.hydration ?? null) : null,
+    flour: keep ? (input.flour ?? null) : null,
+    hydration: keep ? (input.hydration ?? null) : null,
     notes: input.notes ?? null,
     temperature: input.temperature ?? null,
     started_at: input.startedAt ? new Date(input.startedAt).toISOString() : stamp,
@@ -167,16 +191,20 @@ export function patchFerment(db: Db, id: number, patch: FermentPatch) {
   return transaction(db, () => {
     const row = fermentRow(db, id);
     if (patch.name != null) nameTaken(db, patch.name, id);
-    const keep = rules(kindOf(row)).family === "keep";
+    const kind = kindOf(row);
+    const keep = rules(kind).family === "keep";
+    if (patch.variant && !isVariant(kind, patch.variant))
+      throw new HttpError(422, `${rules(kind).label} gibt es nicht als „${patch.variant}“`);
     const values: Record<string, string | number | null> = { updated_at: now() };
     if (patch.name != null) values.name = patch.name;
+    if (patch.variant !== undefined) values.variant = patch.variant;
     if (patch.notes !== undefined) values.notes = patch.notes;
     if (patch.temperature !== undefined) values.temperature = patch.temperature;
     if (keep && patch.flour != null) values.flour = patch.flour;
     if (keep && patch.hydration != null) values.hydration = patch.hydration;
     if (patch.archived !== undefined) values.archived = patch.archived ? 1 : 0;
     if (patch.fridge !== undefined) {
-      if (!keep) throw new HttpError(422, "Nur was gefüttert wird, kann in den Kühlschrank");
+      if (rules(kind).family === "batch") throw new HttpError(422, "Nur was gefüttert wird, kann in den Kühlschrank");
       // Putting it in twice keeps the first time.
       values.fridge_since = patch.fridge ? (row.fridge_since ?? now()) : null;
     }
@@ -238,14 +266,22 @@ export function deleteFeeding(db: Db, id: number) {
   if (run(db, "DELETE FROM feedings WHERE id = ?", id).changes === 0) throw new HttpError(404, "Fütterung nicht gefunden");
 }
 
-/** Burped, tasted, next stage or done. Only tasting works for what gets fed; a batch has no stage after its last. */
+/**
+ * Burped (stirred, turned), tasted, next stage, done or tended. Tasting works for everything, tending only for a
+ * culture, the rest only for a batch, which has no stage after its last.
+ */
 export function addEvent(db: Db, fermentId: number, input: EventInput) {
   return transaction(db, () => {
-    const ferment = toFerment(db, fermentRow(db, fermentId));
-    if (input.kind !== "taste") {
+    const row = fermentRow(db, fermentId);
+    const ferment = toFerment(db, row);
+    if (input.kind === "feed") {
+      if (!ferment.culture) throw new HttpError(422, "Versorgen geht nur bei einer Kultur");
+      if (feedOf(ferment.kind, ferment.variant).leavesFridge && row.fridge_since)
+        update(db, "ferments", { fridge_since: null, updated_at: now() }, { id: fermentId });
+    } else if (input.kind !== "taste") {
       if (!ferment.batch) throw new HttpError(422, "Das geht nur bei einer Charge");
       if (ferment.batch.mood === "done") throw new HttpError(422, "Die Charge ist schon fertig");
-      if (input.kind === "burp" && !ferment.batch.stage.burpHours) throw new HttpError(422, "Diese Stufe muss nicht entlüftet werden");
+      if (input.kind === "burp" && !ferment.batch.stage.tend) throw new HttpError(422, "Diese Stufe braucht das nicht");
       if (input.kind === "stage" && !ferment.batch.stage.next) throw new HttpError(422, "Das ist schon die letzte Stufe");
     }
     const { id } = insert(db, "events", {

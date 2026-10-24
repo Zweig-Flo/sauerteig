@@ -1,6 +1,6 @@
 # CLAUDE.md
 
-Fermente für Flo als Tamagotchi: Sauerteig pflegen, Kimchi, Sauerkraut und Kombucha ansetzen. Arten und Regeln in `shared/kinds.ts`. Läuft als Plugin in food (`Zweig-Flo/food`, `docs/plugins.md`) unter <https://eat.five.beer/plugins/sauerteig>. Überblick und Betrieb: [`README.md`](README.md).
+Fermente für Flo als Tamagotchi: Sauerteig, Kulturen wie Kefir und Chargen von Kimchi bis Met, je mit Rezept, Pflege und eigenem Tamagotchi. Arten in `shared/catalog/`, Typen und Regeln in `shared/kinds.ts`. Läuft als Plugin in food (`Zweig-Flo/food`, `docs/plugins.md`) unter <https://eat.five.beer/plugins/sauerteig>. Überblick und Betrieb: [`README.md`](README.md).
 
 ## Stack und Befehle
 
@@ -23,6 +23,7 @@ Fermente für Flo als Tamagotchi: Sauerteig pflegen, Kimchi, Sauerkraut und Komb
 - Commit-Messages mit Gitmoji, kurz und auf Englisch.
 - Änderungen über Branch und Pull Request, nicht direkt auf `main`.
 - Die Roadmap im README aktuell halten.
+- Rezepte im Katalog in eigenen Worten, mit Quelle (`source`, nur echte, geprüfte Links); neue Arten und Sorten mit Mengen und Zeiten aus der Quelle.
 - Zeitpunkte als ISO in UTC speichern, in Europe/Berlin anzeigen.
 
 ## Secrets
