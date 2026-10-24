@@ -1,19 +1,37 @@
-/* Sauerteig inside food: every class starts with st-, so nothing clashes with food's styles. Colours, font and dark
-   mode come from food's design tokens on :root; the fallbacks only matter outside food. */
+/* Fermente inside food: every class starts with st-, so nothing clashes with food's styles. Colours, font and dark
+   mode come from food's design tokens on :root; the fallbacks only matter outside food. The look follows food: wide
+   bold names, rows on hairlines instead of cards, washes for state, and one loud element, the jar label. */
 
 .st-app {
+  --st-attention: var(--tomato, #b8322a);
+  --st-attention-wash: var(--tomato-wash, #fbe5e2);
+  --st-ready: var(--herb, #23703f);
+  --st-ready-wash: var(--herb-wash, #e0f0e6);
+  --st-active: var(--cobalt, #1f45b5);
+  --st-active-wash: var(--cobalt-wash, #e4eafb);
   display: flex;
   flex-direction: column;
   gap: 20px;
   color: var(--ink, #15202b);
+  font-variant-numeric: tabular-nums;
 }
 
 .st-app h1 {
   margin: 0;
+  font-size: 34px;
+  line-height: 1.05;
+  font-weight: 820;
+  font-stretch: 118%;
+  letter-spacing: -0.01em;
+  text-wrap: balance;
 }
 
 .st-app h2 {
-  margin: 0 0 8px;
+  margin: 0;
+  font-size: 19px;
+  line-height: 1.25;
+  font-weight: 740;
+  font-stretch: 106%;
 }
 
 .st-app p {
@@ -27,6 +45,21 @@
   gap: 12px;
 }
 
+.st-title {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.st-kicker {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--muted, #56616b);
+  font-size: 15px;
+  font-weight: 650;
+}
+
 .st-quiet {
   color: var(--muted, #56616b);
   font-size: 14px;
@@ -34,23 +67,35 @@
 
 .st-error {
   color: var(--tomato, #b8322a);
+  font-weight: 600;
 }
 
-.st-problem {
+.st-problem,
+.st-notice {
   display: flex;
   flex-direction: column;
   align-items: flex-start;
-  gap: 8px;
+  gap: 12px;
+  padding: 16px;
+  border-radius: 12px;
+  background: var(--tomato-wash, #fbe5e2);
+}
+
+.st-notice {
+  background: var(--cobalt-wash, #e4eafb);
 }
 
 .st-back {
   display: inline-flex;
   align-items: center;
-  gap: 4px;
+  gap: 6px;
+  align-self: flex-start;
   color: var(--cobalt, #1f45b5);
-  text-decoration: none;
   font-weight: 600;
+  text-decoration: none;
 }
+
+/* Buttons, as in food */
 
 .st-button,
 .st-icon-button {
@@ -80,6 +125,18 @@
   color: var(--on-fill, #fff);
 }
 
+.st-button-done {
+  border-color: var(--herb-fill, #23703f);
+  background: var(--herb-fill, #23703f);
+  color: var(--on-fill, #fff);
+}
+
+.st-button-quiet {
+  border-color: transparent;
+  color: var(--muted, #56616b);
+  padding: 0 8px;
+}
+
 .st-button:disabled,
 .st-icon-button:disabled {
   opacity: 0.45;
@@ -91,61 +148,385 @@
   padding: 0;
   border: 0;
   background: transparent;
-  color: var(--ink, #15202b);
+  color: var(--muted, #56616b);
 }
 
-.st-list,
-.st-feedings {
+.st-app :focus-visible {
+  outline: 3px solid var(--cobalt, #1f45b5);
+  outline-offset: 2px;
+}
+
+.st-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+/* Tags take the colour of the mood's tone */
+
+.st-tag {
+  display: inline-flex;
+  align-items: center;
+  padding: 1px 8px;
+  border-radius: 999px;
+  background: var(--line, #d3d9dc);
+  color: var(--ink, #15202b);
+  font-size: 12px;
+  font-weight: 700;
+  font-stretch: 100%;
+  letter-spacing: 0.01em;
+  white-space: nowrap;
+}
+
+[data-tone="attention"] .st-tag {
+  background: var(--st-attention-wash);
+  color: var(--st-attention);
+}
+
+[data-tone="ready"] .st-tag {
+  background: var(--yolk, #f5c842);
+  color: #15202b;
+}
+
+[data-tone="active"] .st-tag {
+  background: var(--st-active-wash);
+  color: var(--st-active);
+}
+
+/* Hunger or ripeness */
+
+.st-meter {
+  height: 6px;
+  margin-top: 4px;
+  max-width: 240px;
+  border-radius: 999px;
+  background: var(--line, #d3d9dc);
+  overflow: hidden;
+}
+
+.st-meter > span {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: var(--cobalt-fill, #1f45b5);
+}
+
+.st-meter[data-warn] > span {
+  background: var(--tomato-fill, #b8322a);
+}
+
+/* Due now: like food's prep card, the one card on the list page */
+
+.st-due {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 6px;
+  padding: 14px 16px 6px;
+  border: 2px solid var(--tomato-fill, #b8322a);
+  border-radius: 16px;
+  background: var(--surface, #fff);
+}
+
+.st-due-head {
+  color: var(--tomato, #b8322a);
+}
+
+.st-due ul {
+  display: flex;
+  flex-direction: column;
   margin: 0;
   padding: 0;
   list-style: none;
 }
 
-.st-card {
+.st-due li {
+  border-top: 1px solid var(--line, #d3d9dc);
+}
+
+/* Most urgent first, without sorting in code: the moods are only known per row. */
+.st-due li:has([data-tone="attention"]) {
+  order: -1;
+}
+
+.st-due-row {
   display: grid;
-  grid-template-columns: auto 1fr;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
   gap: 12px;
-  padding: 14px 16px;
-  border: 1px solid var(--line, #d3d9dc);
-  border-radius: 12px;
-  background: var(--surface, #fff);
-  color: inherit;
+  padding: 8px 0;
+  color: var(--ink, #15202b);
   text-decoration: none;
 }
 
-.st-card > span,
-.st-feedings li > span {
+.st-due-row > span {
+  display: flex;
+  flex-direction: column;
+}
+
+.st-due-row strong {
+  font-size: 17px;
+  font-weight: 740;
+  font-stretch: 106%;
+}
+
+.st-due-row[data-tone="ready"] strong {
+  color: var(--herb, #23703f);
+}
+
+.st-due-row svg:last-child {
+  color: var(--muted, #56616b);
+}
+
+.st-due-empty {
+  display: none;
+  padding-bottom: 8px;
+  color: var(--muted, #56616b);
+}
+
+.st-due:has(ul:empty) {
+  border-color: var(--herb-fill, #23703f);
+}
+
+.st-due:has(ul:empty) .st-due-head {
+  color: var(--herb, #23703f);
+}
+
+.st-due:has(ul:empty) .st-due-empty {
+  display: block;
+}
+
+/* Rows on hairlines, like food's week */
+
+.st-rows {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  border-top: 2px solid var(--ink, #15202b);
+}
+
+.st-row {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 14px;
+  padding: 14px 4px;
+  border-bottom: 1px solid var(--line, #d3d9dc);
+  color: var(--ink, #15202b);
+  text-decoration: none;
+}
+
+.st-row[data-tone="attention"] {
+  background: linear-gradient(90deg, var(--st-attention-wash), transparent 70%);
+}
+
+.st-row-jar {
+  display: grid;
+  place-items: center;
+  width: 58px;
+  height: 64px;
+  border-radius: 14px;
+  background: var(--bg, #eef1f0);
+}
+
+.st-row-body {
   display: flex;
   flex-direction: column;
   gap: 2px;
+  min-width: 0;
 }
 
-.st-icon {
-  color: var(--cobalt, #1f45b5);
+.st-row-kind {
+  color: var(--muted, #56616b);
+  font-size: 13px;
+  font-weight: 650;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.st-row-title {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 8px;
+  font-size: 19px;
+  line-height: 1.2;
+  font-weight: 760;
+  font-stretch: 110%;
+  overflow-wrap: anywhere;
+}
+
+.st-row-chevron {
+  color: var(--muted, #56616b);
+}
+
+.st-archived summary {
+  padding: 12px 0;
+  color: var(--muted, #56616b);
+  font-weight: 650;
+  cursor: pointer;
+}
+
+/* Detail: the pet on a wash that follows its mood */
+
+.st-hero {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 16px;
+  border-radius: 16px;
+  background: var(--surface, #fff);
+  border: 1px solid var(--line, #d3d9dc);
+}
+
+.st-hero[data-tone="attention"] {
+  background: var(--st-attention-wash);
+  border-color: transparent;
+}
+
+.st-hero[data-tone="ready"] {
+  background: var(--st-ready-wash);
+  border-color: transparent;
+}
+
+.st-hero[data-tone="active"] {
+  background: var(--st-active-wash);
+  border-color: transparent;
+}
+
+.st-hero-top {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: center;
+  gap: 16px;
+}
+
+.st-hero-jar {
+  display: grid;
+  place-items: center;
+  width: 116px;
+  height: 140px;
+  border-radius: 20px;
+  background: var(--surface, #fff);
+}
+
+.st-hero-info {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 6px;
+  min-width: 0;
+}
+
+.st-hero-says {
+  font-size: 21px;
+  line-height: 1.2;
+  font-weight: 760;
+  font-stretch: 108%;
+  text-wrap: balance;
+}
+
+.st-hero .st-meter {
+  width: 100%;
+  background: color-mix(in srgb, var(--ink, #15202b) 12%, transparent);
+}
+
+.st-hero-actions:empty {
+  display: none;
+}
+
+.st-hero-actions .st-actions > .st-button {
+  flex: 1 1 auto;
+}
+
+/* The jar label: food's nutrition label, for a jar */
+
+.st-label {
+  padding: 10px 12px 12px;
+  border: 3px solid var(--ink, #15202b);
+  background: var(--surface, #fff);
+}
+
+.st-app .st-label-title {
+  padding-bottom: 6px;
+  border-bottom: 10px solid var(--ink, #15202b);
+  font-size: 22px;
+  font-weight: 880;
+  font-stretch: 112%;
+}
+
+.st-label table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.st-label th,
+.st-label td {
+  padding: 7px 0;
+  border-bottom: 1px solid var(--ink, #15202b);
+}
+
+.st-label th {
+  text-align: left;
+  font-weight: 500;
+}
+
+.st-label td {
+  padding-left: 12px;
+  text-align: right;
+}
+
+.st-label .st-label-big th,
+.st-label .st-label-big td {
+  border-bottom-width: 5px;
+  font-size: 18px;
+  font-weight: 800;
+}
+
+.st-label tr:last-child th,
+.st-label tr:last-child td {
+  border-bottom: 0;
+}
+
+.st-label-note {
+  margin-top: 8px;
+  padding-top: 8px;
+  border-top: 3px solid var(--ink, #15202b);
+  font-size: 15px;
+  white-space: pre-line;
+}
+
+/* Logs: feedings and events, like food's task list */
+
+.st-feedings {
+  display: flex;
+  flex-direction: column;
+  margin: 8px 0 0;
+  padding: 0;
+  list-style: none;
+  border-top: 1px solid var(--line, #d3d9dc);
 }
 
 .st-feedings li {
   display: grid;
-  grid-template-columns: 1fr auto;
+  grid-template-columns: minmax(0, 1fr) auto;
   align-items: center;
   gap: 8px;
-  padding: 8px 0;
+  padding: 10px 0;
   border-bottom: 1px solid var(--line, #d3d9dc);
 }
 
-.st-archived summary {
-  cursor: pointer;
-  color: var(--muted, #56616b);
-  margin-bottom: 8px;
+.st-feedings li > span {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
 }
 
-.st-notes {
-  margin-top: 8px;
-  white-space: pre-line;
+.st-feedings strong {
+  font-weight: 700;
 }
+
+/* Forms */
 
 .st-form {
   display: flex;
@@ -155,7 +536,7 @@
 
 .st-feed {
   padding: 16px;
-  border-radius: 12px;
+  border-radius: 16px;
   background: var(--surface, #fff);
   border: 1px solid var(--line, #d3d9dc);
 }
@@ -165,27 +546,260 @@
   flex-direction: column;
   gap: 4px;
   font-size: 14px;
-  font-weight: 600;
+  font-weight: 650;
+  color: var(--muted, #56616b);
 }
 
 .st-form input,
 .st-form textarea {
+  width: 100%;
   min-height: 44px;
   padding: 8px 12px;
   border: 1.5px solid var(--line, #d3d9dc);
   border-radius: 10px;
   background: var(--bg, #eef1f0);
-  color: inherit;
+  color: var(--ink, #15202b);
   font: inherit;
-  font-weight: 400;
+  font-size: 16px;
+  font-weight: 500;
+}
+
+.st-form input:focus,
+.st-form textarea:focus {
+  border-color: var(--cobalt, #1f45b5);
+  outline: none;
 }
 
 .st-grams {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 8px;
 }
 
-.st-grams input {
-  width: 100%;
+.st-grams-2 {
+  grid-template-columns: 2fr 1fr;
+}
+
+.st-span-2 {
+  grid-column: span 2;
+}
+
+.st-peak-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: end;
+  gap: 8px;
+}
+
+/* The pet */
+
+/* Each kind has its own colour in the jar, the only own colours; mixed with food's surface so they follow dark mode. */
+.st-pet {
+  --st-dough: color-mix(in srgb, #e2c48e 75%, var(--surface, #fff));
+  /* The face sits on the light fill in both themes, so it stays dark. */
+  --st-face: #1d1a16;
+}
+
+.st-pet-kind-kimchi {
+  --st-dough: color-mix(in srgb, #d9542c 70%, var(--surface, #fff));
+}
+
+.st-pet-kind-sauerkraut {
+  --st-dough: color-mix(in srgb, #d3d98a 75%, var(--surface, #fff));
+}
+
+.st-pet-kind-kombucha {
+  --st-dough: color-mix(in srgb, #c98a3a 60%, var(--surface, #fff));
+}
+
+.st-pet {
+  flex: none;
+  overflow: visible;
+}
+
+.st-pet-glass {
+  fill: color-mix(in srgb, var(--bg, #eef1f0) 60%, transparent);
+  stroke: var(--line, #d3d9dc);
+  stroke-width: 3;
+}
+
+.st-pet-lid {
+  fill: var(--muted, #56616b);
+}
+
+.st-pet-fill,
+.st-pet-shell {
+  fill: var(--st-dough, #ecd6a9);
+  stroke: color-mix(in srgb, var(--st-dough, #ecd6a9) 70%, var(--ink, #15202b));
+  stroke-width: 1.5;
+}
+
+.st-pet-line,
+.st-pet-streak {
+  fill: none;
+  stroke: var(--st-face, #1d1a16);
+  stroke-width: 2.4;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.st-pet-streak {
+  stroke: color-mix(in srgb, var(--st-dough, #ecd6a9) 70%, var(--ink, #15202b));
+  stroke-width: 1.5;
+  stroke-dasharray: 3 4;
+}
+
+.st-pet-ink {
+  fill: var(--st-face, #1d1a16);
+}
+
+.st-pet-cheeks {
+  fill: var(--tomato, #b8322a);
+  opacity: 0.35;
+}
+
+.st-pet-bubbles {
+  fill: color-mix(in srgb, var(--surface, #fff) 70%, transparent);
+  stroke: color-mix(in srgb, var(--st-dough, #ecd6a9) 60%, var(--ink, #15202b));
+  stroke-width: 0.8;
+}
+
+.st-pet-zzz {
+  fill: var(--muted, #56616b);
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.st-pet-sleeping .st-pet-fill {
+  fill: color-mix(in srgb, var(--st-dough, #ecd6a9) 82%, var(--cobalt, #1f45b5));
+}
+
+.st-pet-starving .st-pet-fill,
+.st-pet-overripe .st-pet-fill {
+  fill: color-mix(in srgb, var(--st-dough, #ecd6a9) 65%, var(--muted, #56616b));
+}
+
+.st-pet-texture {
+  fill: color-mix(in srgb, var(--st-dough, #ecd6a9) 55%, var(--ink, #15202b));
+  stroke: color-mix(in srgb, var(--st-dough, #ecd6a9) 55%, var(--ink, #15202b));
+  stroke-width: 1.4;
+  stroke-linecap: round;
+  fill-opacity: 0.25;
+}
+
+.st-pet-scoby {
+  fill: color-mix(in srgb, var(--st-dough, #ecd6a9) 40%, var(--surface, #fff));
+  stroke: color-mix(in srgb, var(--st-dough, #ecd6a9) 60%, var(--ink, #15202b));
+  stroke-width: 1;
+}
+
+.st-pet-sparkle {
+  fill: var(--cobalt, #1f45b5);
+}
+
+.st-pet-body {
+  transform-box: fill-box;
+  transform-origin: 50% 100%;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .st-pet-rising .st-pet-body,
+  .st-pet-full .st-pet-body {
+    animation: st-breathe 3.2s ease-in-out infinite;
+  }
+
+  .st-pet-peak .st-pet-body,
+  .st-pet-ready .st-pet-body {
+    animation: st-bounce 0.9s ease-in-out infinite;
+  }
+
+  .st-pet-hungry .st-pet-body,
+  .st-pet-starving .st-pet-body {
+    animation: st-wobble 2.4s ease-in-out infinite;
+  }
+
+  .st-pet-egg .st-pet-body,
+  .st-pet-overripe .st-pet-body {
+    animation: st-wobble 1.6s ease-in-out infinite;
+  }
+
+  .st-pet-bubbles circle {
+    animation: st-bubble 2.4s ease-in infinite;
+  }
+
+  .st-pet-bubbles circle:nth-child(2) {
+    animation-delay: 0.8s;
+  }
+
+  .st-pet-bubbles circle:nth-child(3) {
+    animation-delay: 1.6s;
+  }
+
+  .st-pet-burp .st-pet-body {
+    animation: st-puff 0.7s ease-in-out infinite;
+  }
+
+  .st-pet-sparkle {
+    transform-box: fill-box;
+    transform-origin: center;
+    animation: st-twinkle 1.6s ease-in-out infinite;
+  }
+
+  .st-pet-zzz {
+    animation: st-float 2.8s ease-in-out infinite;
+  }
+}
+
+@keyframes st-breathe {
+  50% {
+    transform: scaleY(1.04);
+  }
+}
+
+@keyframes st-bounce {
+  50% {
+    transform: translateY(-3px) scaleY(1.03);
+  }
+}
+
+@keyframes st-wobble {
+  25% {
+    transform: rotate(-2deg);
+  }
+  75% {
+    transform: rotate(2deg);
+  }
+}
+
+@keyframes st-bubble {
+  from {
+    transform: translateY(0);
+    opacity: 0;
+  }
+  20% {
+    opacity: 1;
+  }
+  to {
+    transform: translateY(-40px);
+    opacity: 0;
+  }
+}
+
+@keyframes st-puff {
+  50% {
+    transform: scale(1.05, 0.97);
+  }
+}
+
+@keyframes st-twinkle {
+  50% {
+    transform: scale(0.6) rotate(20deg);
+    opacity: 0.6;
+  }
+}
+
+@keyframes st-float {
+  50% {
+    transform: translateY(-4px);
+  }
 }

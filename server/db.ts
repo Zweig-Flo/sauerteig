@@ -28,6 +28,55 @@ const MIGRATIONS = [
   );
   CREATE INDEX feedings_starter ON feedings (starter_id, fed_at);
   `,
+  // Starters become ferments of a kind; flour and hydration only matter for sourdough, so the tables are rebuilt.
+  `
+  CREATE TABLE ferments (
+    id INTEGER PRIMARY KEY,
+    kind TEXT NOT NULL,
+    name TEXT NOT NULL COLLATE NOCASE UNIQUE,
+    flour TEXT,
+    hydration INTEGER,
+    notes TEXT,
+    temperature REAL,
+    started_at TEXT NOT NULL,
+    fridge_since TEXT,
+    archived INTEGER NOT NULL DEFAULT 0,
+    created_at TEXT NOT NULL,
+    updated_at TEXT NOT NULL
+  );
+  INSERT INTO ferments (id, kind, name, flour, hydration, notes, started_at, archived, created_at, updated_at)
+    SELECT id, 'sourdough', name, flour, hydration, notes, created_at, archived, created_at, updated_at FROM starters;
+
+  CREATE TABLE feedings_new (
+    id INTEGER PRIMARY KEY,
+    ferment_id INTEGER NOT NULL REFERENCES ferments (id) ON DELETE CASCADE,
+    fed_at TEXT NOT NULL,
+    starter_grams REAL NOT NULL,
+    flour_grams REAL NOT NULL,
+    water_grams REAL NOT NULL,
+    note TEXT,
+    temperature REAL,
+    peak_at TEXT,
+    rise_percent INTEGER,
+    created_at TEXT NOT NULL
+  );
+  INSERT INTO feedings_new (id, ferment_id, fed_at, starter_grams, flour_grams, water_grams, note, created_at)
+    SELECT id, starter_id, fed_at, starter_grams, flour_grams, water_grams, note, created_at FROM feedings;
+  DROP TABLE feedings;
+  DROP TABLE starters;
+  ALTER TABLE feedings_new RENAME TO feedings;
+  CREATE INDEX feedings_ferment ON feedings (ferment_id, fed_at);
+
+  CREATE TABLE events (
+    id INTEGER PRIMARY KEY,
+    ferment_id INTEGER NOT NULL REFERENCES ferments (id) ON DELETE CASCADE,
+    kind TEXT NOT NULL,
+    at TEXT NOT NULL,
+    note TEXT,
+    created_at TEXT NOT NULL
+  );
+  CREATE INDEX events_ferment ON events (ferment_id, at);
+  `,
 ];
 
 export function openDatabase(file: string): Db {

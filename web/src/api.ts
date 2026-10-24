@@ -1,6 +1,6 @@
 import { DetailedError, hc, parseResponse, type ClientResponse } from "hono/client";
 import type { ApiType } from "../../server/app.ts";
-import type { FeedingInput, StarterInput, StarterPatch } from "../../shared/schema.ts";
+import type { EventInput, FeedingInput, FeedingObservation, FermentInput, FermentPatch } from "../../shared/schema.ts";
 
 export class ApiError extends Error {
   /** HTTP status, 0 when the server could not be reached. */
@@ -30,18 +30,23 @@ const id = (value: number) => ({ id: String(value) });
 export function createApi(apiBase: string) {
   const client = hc<ApiType>(apiBase);
   return {
-    starters: () => data(client.starters.$get()),
-    starter: (starterId: number) => data(client.starters[":id"].$get({ param: id(starterId) })),
-    createStarter: (json: StarterInput) => data(client.starters.$post({ json })),
-    patchStarter: (starterId: number, json: StarterPatch) =>
-      data(client.starters[":id"].$patch({ param: id(starterId), json })),
-    feed: (starterId: number, json: FeedingInput) =>
-      data(client.starters[":id"].feedings.$post({ param: id(starterId), json })),
+    ferments: () => data(client.ferments.$get()),
+    ferment: (fermentId: number) => data(client.ferments[":id"].$get({ param: id(fermentId) })),
+    createFerment: (json: FermentInput) => data(client.ferments.$post({ json })),
+    patchFerment: (fermentId: number, json: FermentPatch) =>
+      data(client.ferments[":id"].$patch({ param: id(fermentId), json })),
+    feed: (fermentId: number, json: FeedingInput) =>
+      data(client.ferments[":id"].feedings.$post({ param: id(fermentId), json })),
+    addEvent: (fermentId: number, json: EventInput) =>
+      data(client.ferments[":id"].events.$post({ param: id(fermentId), json })),
+    deleteEvent: (eventId: number) => data(client.events[":id"].$delete({ param: id(eventId) })),
+    observeFeeding: (feedingId: number, json: FeedingObservation) =>
+      data(client.feedings[":id"].$patch({ param: id(feedingId), json })),
     deleteFeeding: (feedingId: number) => data(client.feedings[":id"].$delete({ param: id(feedingId) })),
   };
 }
 
 export type Api = ReturnType<typeof createApi>;
-export type Starter = Awaited<ReturnType<Api["starters"]>>[number];
-export type StarterDetail = Awaited<ReturnType<Api["starter"]>>;
-export type Feeding = StarterDetail["feedings"][number];
+export type Ferment = Awaited<ReturnType<Api["ferments"]>>[number];
+export type FermentDetail = Awaited<ReturnType<Api["ferment"]>>;
+export type Feeding = FermentDetail["feedings"][number];

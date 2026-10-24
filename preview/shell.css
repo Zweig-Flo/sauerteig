@@ -1,0 +1,134 @@
+/* Page around the preview: food's design tokens (from web/dev.css), here for both theme switches of the viewer. */
+
+:root {
+  --bg: #eef1f0;
+  --surface: #ffffff;
+  --ink: #15202b;
+  --muted: #56616b;
+  --line: #d3d9dc;
+  --cobalt: #1f45b5;
+  --cobalt-fill: #1f45b5;
+  --cobalt-wash: #e4eafb;
+  --tomato: #b8322a;
+  --tomato-fill: #b8322a;
+  --tomato-wash: #fbe5e2;
+  --herb: #23703f;
+  --herb-fill: #23703f;
+  --herb-wash: #e0f0e6;
+  --yolk: #f5c842;
+  --on-fill: #ffffff;
+  --font: "Archivo", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --page: 600px;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0f151c;
+    --surface: #18212b;
+    --ink: #e6ebf0;
+    --muted: #9aa5b0;
+    --line: #2b3743;
+    --cobalt: #9db3ff;
+    --cobalt-fill: #3d5fd6;
+    --cobalt-wash: #1d2a4d;
+    --tomato: #ff8f80;
+    --tomato-fill: #c0453a;
+    --tomato-wash: #3a1d1a;
+    --herb: #74c99a;
+    --herb-fill: #2f8a52;
+    --herb-wash: #173326;
+    --yolk: #e2bb3f;
+    color-scheme: dark;
+  }
+}
+
+:root[data-theme="dark"] {
+  --bg: #0f151c;
+  --surface: #18212b;
+  --ink: #e6ebf0;
+  --muted: #9aa5b0;
+  --line: #2b3743;
+  --cobalt: #9db3ff;
+  --cobalt-fill: #3d5fd6;
+  --cobalt-wash: #1d2a4d;
+  --tomato: #ff8f80;
+  --tomato-fill: #c0453a;
+  --tomato-wash: #3a1d1a;
+  --herb: #74c99a;
+  --herb-fill: #2f8a52;
+  --herb-wash: #173326;
+  --yolk: #e2bb3f;
+  color-scheme: dark;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+body {
+  font-stretch: 100%;
+  background: var(--bg);
+  color: var(--ink);
+  font: 400 16px/1.45 var(--font);
+  -webkit-font-smoothing: antialiased;
+}
+
+.preview-page {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  max-width: var(--page);
+  margin: 0 auto;
+  padding-block: 16px 80px;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+}
+
+.preview-bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px 12px;
+  padding: 10px 14px;
+  border-radius: 10px;
+  background: var(--cobalt-wash);
+  color: var(--ink);
+  font-size: 14px;
+}
+
+.preview-bar p {
+  margin: 0;
+  min-width: 0;
+}
+
+.preview-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.preview-actions button {
+  min-height: 36px;
+  padding: 0 12px;
+  border: 1.5px solid var(--cobalt);
+  border-radius: 8px;
+  background: transparent;
+  color: var(--cobalt);
+  font: inherit;
+  font-weight: 650;
+  cursor: pointer;
+}
+
+.preview-actions button:focus-visible,
+.st-app :focus-visible {
+  outline: 2px solid var(--cobalt);
+  outline-offset: 2px;
+}
+
+.preview-actions button:disabled {
+  opacity: 0.5;
+  cursor: default;
+}

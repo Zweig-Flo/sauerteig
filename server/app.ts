@@ -1,10 +1,20 @@
 import { zValidator } from "@hono/zod-validator";
 import { Hono, type ValidationTargets } from "hono";
 import { z } from "zod";
-import { feedingInput, starterInput, starterPatch } from "../shared/schema.ts";
+import { eventInput, feedingInput, feedingObservation, fermentInput, fermentPatch } from "../shared/schema.ts";
 import { requirePlugin, type AuthEnv } from "./auth.ts";
 import { HttpError, type Db } from "./db.ts";
-import { addFeeding, createStarter, deleteFeeding, getStarter, listStarters, patchStarter } from "./starters.ts";
+import {
+  addEvent,
+  addFeeding,
+  createFerment,
+  deleteEvent,
+  deleteFeeding,
+  getFerment,
+  listFerments,
+  observeFeeding,
+  patchFerment,
+} from "./ferments.ts";
 
 export interface AppOptions {
   db: Db;
@@ -29,17 +39,27 @@ export function createApi({ db, secret }: AppOptions) {
     .use(requirePlugin(secret))
     .get("/me", (c) => c.json({ actor: c.get("actor") }))
 
-    .get("/starters", (c) => c.json(listStarters(db)))
-    .post("/starters", validate("json", starterInput), (c) => c.json(createStarter(db, c.req.valid("json")), 201))
-    .get("/starters/:id", validate("param", idParam), (c) => c.json(getStarter(db, c.req.valid("param").id)))
-    .patch("/starters/:id", validate("param", idParam), validate("json", starterPatch), (c) =>
-      c.json(patchStarter(db, c.req.valid("param").id, c.req.valid("json"))),
+    .get("/ferments", (c) => c.json(listFerments(db)))
+    .post("/ferments", validate("json", fermentInput), (c) => c.json(createFerment(db, c.req.valid("json")), 201))
+    .get("/ferments/:id", validate("param", idParam), (c) => c.json(getFerment(db, c.req.valid("param").id)))
+    .patch("/ferments/:id", validate("param", idParam), validate("json", fermentPatch), (c) =>
+      c.json(patchFerment(db, c.req.valid("param").id, c.req.valid("json"))),
     )
-    .post("/starters/:id/feedings", validate("param", idParam), validate("json", feedingInput), (c) =>
+    .post("/ferments/:id/feedings", validate("param", idParam), validate("json", feedingInput), (c) =>
       c.json(addFeeding(db, c.req.valid("param").id, c.req.valid("json")), 201),
+    )
+    .post("/ferments/:id/events", validate("param", idParam), validate("json", eventInput), (c) =>
+      c.json(addEvent(db, c.req.valid("param").id, c.req.valid("json")), 201),
+    )
+    .patch("/feedings/:id", validate("param", idParam), validate("json", feedingObservation), (c) =>
+      c.json(observeFeeding(db, c.req.valid("param").id, c.req.valid("json"))),
     )
     .delete("/feedings/:id", validate("param", idParam), (c) => {
       deleteFeeding(db, c.req.valid("param").id);
+      return c.json({ ok: true });
+    })
+    .delete("/events/:id", validate("param", idParam), (c) => {
+      deleteEvent(db, c.req.valid("param").id);
       return c.json({ ok: true });
     });
 }
